@@ -15,6 +15,8 @@ export function defaultState(): AppState {
     unitProgress: {},
     sessionsCompleted: 0,
     freezeAvailable: true,
+    hearts: 5,
+    heartsRegenAt: null,
   };
 }
 

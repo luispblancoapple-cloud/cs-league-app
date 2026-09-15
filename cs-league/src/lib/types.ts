@@ -1,7 +1,6 @@
-export interface TestMeta {
-  id: number;
-  year: string;
-  level: string;
+export interface TopicMeta {
+  id: string;
+  name: string;
 }
 
 export interface Question {
@@ -12,10 +11,11 @@ export interface Question {
   freeResponse: boolean;
   answer: string | null;
   explanation: string;
+  topic: string;
 }
 
 export interface Manifest {
-  tests: TestMeta[];
+  topics: TopicMeta[];
   questions: Question[];
 }
 
@@ -40,9 +40,11 @@ export interface AppState {
   lastSessionDate: string | null;
   dailyGoal: number;
   questionStats: Record<string, QuestionStat>;
-  unitProgress: Record<number, UnitProgress>;
+  unitProgress: Record<string, UnitProgress>;
   sessionsCompleted: number;
   freezeAvailable: boolean;
+  hearts: number;
+  heartsRegenAt: number | null;
 }
 
 export interface SessionQuestion extends Question {

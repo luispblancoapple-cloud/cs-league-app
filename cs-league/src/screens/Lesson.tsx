@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { X, Heart, Check, XCircle } from 'lucide-react';
 import { SessionQuestion, SessionResult } from '../lib/types';
+import { playSound } from '../lib/sound';
 
 const ALL_LETTERS = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'];
 
@@ -10,15 +11,21 @@ function normalize(s: string): string {
 
 export default function Lesson({
   questions,
+  initialHearts,
+  onWrongAnswer,
   onFinish,
+  onOutOfHearts,
   onExit,
 }: {
   questions: SessionQuestion[];
+  initialHearts: number;
+  onWrongAnswer: () => void;
   onFinish: (results: SessionResult[]) => void;
+  onOutOfHearts: (results: SessionResult[]) => void;
   onExit: () => void;
 }) {
   const [index, setIndex] = useState(0);
-  const [hearts, setHearts] = useState(5);
+  const [heartsLeft, setHeartsLeft] = useState(initialHearts);
   const [selected, setSelected] = useState<string | null>(null);
   const [freeText, setFreeText] = useState('');
   const [submitted, setSubmitted] = useState(false);
@@ -39,12 +46,23 @@ export default function Lesson({
     }
     setWasCorrect(correct);
     setSubmitted(true);
-    if (!correct) setHearts((h) => Math.max(0, h - 1));
+    if (correct) {
+      playSound('correct');
+    } else {
+      playSound('incorrect');
+      onWrongAnswer();
+      setHeartsLeft((h) => Math.max(0, h - 1));
+    }
   }
 
   function recordAndAdvance(finalCorrect: boolean) {
     const newResults = [...results, { qid: q.qid, correct: finalCorrect, wasReview: false }];
     setResults(newResults);
+
+    if (!finalCorrect && heartsLeft <= 0) {
+      onOutOfHearts(newResults);
+      return;
+    }
     if (index + 1 >= total) {
       onFinish(newResults);
     } else {
@@ -74,7 +92,7 @@ export default function Lesson({
         </div>
         <div className="hearts">
           {Array.from({ length: 5 }).map((_, i) => (
-            <Heart key={i} size={18} fill={i < hearts ? 'currentColor' : 'none'} />
+            <Heart key={i} size={18} fill={i < heartsLeft ? 'currentColor' : 'none'} />
           ))}
         </div>
       </div>
@@ -130,7 +148,11 @@ export default function Lesson({
             <>
               <div className={`feedback-title ${displayCorrect ? 'correct' : 'incorrect'}`}>
                 {displayCorrect ? <Check size={22} /> : <XCircle size={22} />}
-                {displayCorrect ? 'Correct!' : 'Not quite'}
+                {displayCorrect
+                  ? 'Correct!'
+                  : !overridden && heartsLeft <= 0
+                    ? 'Out of hearts!'
+                    : 'Not quite'}
               </div>
               {!wasCorrect && (
                 <div className="correct-answer-line">
@@ -158,7 +180,13 @@ export default function Lesson({
               !submitted && (q.freeResponse ? freeText.trim().length === 0 : !selected)
             }
           >
-            {submitted ? (index + 1 >= total ? 'Finish' : 'Continue') : 'Check'}
+            {submitted
+              ? !displayCorrect && heartsLeft <= 0
+                ? 'See results'
+                : index + 1 >= total
+                  ? 'Finish'
+                  : 'Continue'
+              : 'Check'}
           </button>
         </div>
       </div>

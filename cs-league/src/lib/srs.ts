@@ -1,4 +1,4 @@
-import { AppState, Manifest, Question, QuestionStat, SessionQuestion, TestMeta } from './types';
+import { AppState, Manifest, Question, QuestionStat, SessionQuestion, TopicMeta } from './types';
 import { todayStr, daysBetween } from './storage';
 
 export const BOX_INTERVALS = [0, 1, 2, 4, 7, 14, 30]; // days until due, indexed by box
@@ -49,54 +49,38 @@ export function applyAnswer(state: AppState, id: string, correct: boolean): AppS
   };
 }
 
-// ---- Unit ordering ----
+// ---- Topic (unit) ordering ----
 
-const LEVEL_RANK: Record<string, number> = {
-  'Invitational A': 0,
-  'Invitational B': 0,
-  Invitational: 0,
-  District: 1,
-  Region: 2,
-  State: 3,
-};
-
-export function orderedUnits(tests: TestMeta[]): TestMeta[] {
-  return [...tests].sort((a, b) => {
-    const ra = LEVEL_RANK[a.level] ?? 5;
-    const rb = LEVEL_RANK[b.level] ?? 5;
-    if (ra !== rb) return ra - rb;
-    if (a.year !== b.year) return a.year.localeCompare(b.year);
-    return a.level.localeCompare(b.level);
-  });
+export function orderedUnits(topics: TopicMeta[]): TopicMeta[] {
+  return topics; // manifest already lists topics in pedagogical order
 }
 
-export function unitQuestions(manifest: Manifest, testId: number): Question[] {
-  return manifest.questions
-    .filter((q) => q.testId === testId)
-    .sort((a, b) => a.number - b.number);
+export function unitQuestions(manifest: Manifest, topicId: string): Question[] {
+  return manifest.questions.filter((q) => q.topic === topicId);
 }
 
-export function unitSeenCount(state: AppState, manifest: Manifest, testId: number): number {
-  const qs = unitQuestions(manifest, testId);
+export function unitSeenCount(state: AppState, manifest: Manifest, topicId: string): number {
+  const qs = unitQuestions(manifest, topicId);
   return qs.filter((q) => getStat(state, qid(q.testId, q.number)).seen > 0).length;
 }
 
-export function isUnitComplete(state: AppState, manifest: Manifest, testId: number): boolean {
-  return unitSeenCount(state, manifest, testId) >= unitQuestions(manifest, testId).length;
+export function isUnitComplete(state: AppState, manifest: Manifest, topicId: string): boolean {
+  const qs = unitQuestions(manifest, topicId);
+  return qs.length > 0 && unitSeenCount(state, manifest, topicId) >= qs.length;
 }
 
 export function isUnitUnlocked(
   state: AppState,
   manifest: Manifest,
-  units: TestMeta[],
-  testId: number
+  units: TopicMeta[],
+  topicId: string
 ): boolean {
-  const idx = units.findIndex((u) => u.id === testId);
+  const idx = units.findIndex((u) => u.id === topicId);
   if (idx <= 0) return true;
   return isUnitComplete(state, manifest, units[idx - 1].id);
 }
 
-export function currentActiveUnit(state: AppState, manifest: Manifest, units: TestMeta[]): TestMeta {
+export function currentActiveUnit(state: AppState, manifest: Manifest, units: TopicMeta[]): TopicMeta {
   for (const u of units) {
     if (!isUnitComplete(state, manifest, u.id)) return u;
   }
@@ -135,7 +119,7 @@ export function dueReviewQuestions(state: AppState, manifest: Manifest): Questio
 export function buildDailyLesson(
   state: AppState,
   manifest: Manifest,
-  units: TestMeta[]
+  units: TopicMeta[]
 ): SessionQuestion[] {
   const goal = state.dailyGoal;
   const due = dueReviewQuestions(state, manifest);
@@ -159,7 +143,6 @@ export function buildDailyLesson(
   }
   for (const q of newPicked) pickedIds.add(qid(q.testId, q.number));
 
-  // if still short (e.g. everything mastered), pad with more due/random review
   let combined = [...reviewPicked, ...newPicked];
   if (combined.length < goal) {
     const more = due.slice(reviewSlots).filter((q) => !pickedIds.has(qid(q.testId, q.number)));
@@ -178,14 +161,13 @@ const UNIT_SESSION_SIZE = 20;
 export function buildUnitPractice(
   state: AppState,
   manifest: Manifest,
-  testId: number
+  topicId: string
 ): SessionQuestion[] {
-  const qs = unitQuestions(manifest, testId);
+  const qs = unitQuestions(manifest, topicId);
   const unseen = qs.filter((q) => getStat(state, qid(q.testId, q.number)).seen === 0);
   if (unseen.length > 0) {
-    return unseen.slice(0, UNIT_SESSION_SIZE).map(toSessionQ);
+    return shuffle(unseen).slice(0, UNIT_SESSION_SIZE).map(toSessionQ);
   }
-  // whole unit already seen at least once -> light shuffled review of the unit
   const seen = qs.filter((q) => getStat(state, qid(q.testId, q.number)).seen > 0);
   return shuffle(seen).slice(0, UNIT_SESSION_SIZE).map(toSessionQ);
 }

@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react';
-import { AppState, Manifest, TestMeta } from '../lib/types';
+import { Gem, Clock } from 'lucide-react';
+import { AppState, Manifest, TopicMeta } from '../lib/types';
 import {
   orderedUnits,
   isUnitComplete,
@@ -7,6 +8,7 @@ import {
   currentActiveUnit,
   dueReviewQuestions,
 } from '../lib/srs';
+import { timeUntilNextHeart } from '../lib/hearts';
 import TopBar from '../components/TopBar';
 import UnitNode from '../components/UnitNode';
 import UnitSheet from '../components/UnitSheet';
@@ -19,17 +21,22 @@ export default function Home({
   onStartDaily,
   onStartUnit,
   onSettings,
+  onRefillHearts,
 }: {
   state: AppState;
   manifest: Manifest;
   onStartDaily: () => void;
-  onStartUnit: (testId: number) => void;
+  onStartUnit: (topicId: string) => void;
   onSettings: () => void;
+  onRefillHearts: () => void;
 }) {
-  const units = useMemo(() => orderedUnits(manifest.tests), [manifest]);
+  const units = useMemo(() => orderedUnits(manifest.topics), [manifest]);
   const active = useMemo(() => currentActiveUnit(state, manifest, units), [state, manifest, units]);
   const dueCount = useMemo(() => dueReviewQuestions(state, manifest).length, [state, manifest]);
-  const [openUnit, setOpenUnit] = useState<TestMeta | null>(null);
+  const [openUnit, setOpenUnit] = useState<TopicMeta | null>(null);
+
+  const outOfHearts = state.hearts <= 0;
+  const nextHeartTime = timeUntilNextHeart(state);
 
   return (
     <div className="app-shell">
@@ -37,12 +44,10 @@ export default function Home({
       <div className="home-scroll">
         <div className="unit-banner">
           <div className="eyebrow">
-            {active.level} &middot; {active.year}
+            Unit {units.findIndex((u) => u.id === active.id) + 1} of {units.length}
           </div>
           <h2>
-            {isUnitComplete(state, manifest, active.id)
-              ? 'All units complete — keep reviewing!'
-              : `Unit ${units.findIndex((u) => u.id === active.id) + 1} of ${units.length}`}
+            {isUnitComplete(state, manifest, active.id) ? 'All units complete — keep reviewing!' : active.name}
           </h2>
         </div>
 
@@ -65,9 +70,38 @@ export default function Home({
       </div>
 
       <div className="bottom-cta">
-        <button className="btn btn-primary" onClick={onStartDaily}>
-          {dueCount > 0 ? `Today's lesson · ${dueCount} due for review` : "Start today's lesson"}
-        </button>
+        {outOfHearts ? (
+          <div style={{ width: '100%', maxWidth: 520 }}>
+            <div
+              style={{
+                background: 'var(--surface-2)',
+                border: '1px solid var(--border-light)',
+                borderRadius: 16,
+                padding: '14px 16px',
+                marginBottom: 10,
+                display: 'flex',
+                alignItems: 'center',
+                gap: 10,
+                color: 'var(--text-muted)',
+                fontSize: 14,
+              }}
+            >
+              <Clock size={18} />
+              {nextHeartTime
+                ? `Out of hearts — next one in ${nextHeartTime}`
+                : 'Out of hearts'}
+            </div>
+            <button className="btn btn-primary" onClick={onRefillHearts} disabled={state.gems < 30}>
+              <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
+                <Gem size={18} /> Refill for 30 gems
+              </span>
+            </button>
+          </div>
+        ) : (
+          <button className="btn btn-primary" onClick={onStartDaily}>
+            {dueCount > 0 ? `Today's lesson · ${dueCount} due for review` : "Start today's lesson"}
+          </button>
+        )}
       </div>
 
       {openUnit && (
@@ -77,6 +111,7 @@ export default function Home({
           manifest={manifest}
           onClose={() => setOpenUnit(null)}
           onPractice={() => {
+            if (outOfHearts) return;
             const id = openUnit.id;
             setOpenUnit(null);
             onStartUnit(id);

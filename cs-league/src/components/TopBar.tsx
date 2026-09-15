@@ -1,4 +1,4 @@
-import { Flame, Gem, Zap, Settings } from 'lucide-react';
+import { Flame, Gem, Zap, Settings, Heart } from 'lucide-react';
 import { AppState } from '../lib/types';
 
 export default function TopBar({
@@ -10,6 +10,10 @@ export default function TopBar({
 }) {
   return (
     <div className="topbar">
+      <div className="stat-pill" style={{ color: 'var(--red)' }}>
+        <Heart size={18} fill="currentColor" />
+        {state.hearts}
+      </div>
       <div className="stat-pill flame">
         <Flame size={20} fill="currentColor" />
         {state.streak}

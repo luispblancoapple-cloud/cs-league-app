@@ -1,5 +1,5 @@
 import { X } from 'lucide-react';
-import { AppState, Manifest, TestMeta } from '../lib/types';
+import { AppState, Manifest, TopicMeta } from '../lib/types';
 import { unitQuestions, unitSeenCount, qid, getStat } from '../lib/srs';
 
 export default function UnitSheet({
@@ -9,7 +9,7 @@ export default function UnitSheet({
   onClose,
   onPractice,
 }: {
-  unit: TestMeta;
+  unit: TopicMeta;
   state: AppState;
   manifest: Manifest;
   onClose: () => void;
@@ -18,7 +18,7 @@ export default function UnitSheet({
   const qs = unitQuestions(manifest, unit.id);
   const seen = unitSeenCount(state, manifest, unit.id);
   const correct = qs.reduce((acc, q) => acc + getStat(state, qid(q.testId, q.number)).correct, 0);
-  const pct = Math.round((seen / qs.length) * 100);
+  const pct = qs.length > 0 ? Math.round((seen / qs.length) * 100) : 0;
 
   return (
     <div className="sheet-backdrop" onClick={onClose}>
@@ -31,10 +31,19 @@ export default function UnitSheet({
         >
           <X size={18} />
         </button>
-        <div className="eyebrow" style={{ color: 'var(--text-muted)', fontSize: 12, fontWeight: 700, letterSpacing: 0.5, textTransform: 'uppercase' }}>
-          {unit.level}
+        <div
+          className="eyebrow"
+          style={{
+            color: 'var(--text-muted)',
+            fontSize: 12,
+            fontWeight: 700,
+            letterSpacing: 0.5,
+            textTransform: 'uppercase',
+          }}
+        >
+          Unit
         </div>
-        <h2>{unit.year} UIL Computer Science</h2>
+        <h2>{unit.name}</h2>
         <div className="sub">
           {seen} / {qs.length} questions practiced &middot; {correct} correct all-time
         </div>
