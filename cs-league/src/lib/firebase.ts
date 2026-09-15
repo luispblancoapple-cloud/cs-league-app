@@ -13,12 +13,13 @@ import { initializeApp, FirebaseApp } from 'firebase/app';
 import { getFirestore, Firestore, doc, getDoc, setDoc } from 'firebase/firestore';
 
 const firebaseConfig = {
-  // apiKey: "...",
-  // authDomain: "...",
-  // projectId: "...",
-  // storageBucket: "...",
-  // messagingSenderId: "...",
-  // appId: "...",
+  apiKey: "AIzaSyDixyRq_t4VU2li8PYYC-15BWV7qMijzkk",
+  authDomain: "cs-league-app.firebaseapp.com",
+  projectId: "cs-league-app",
+  storageBucket: "cs-league-app.firebasestorage.app",
+  messagingSenderId: "800507757719",
+  appId: "1:800507757719:web:95b719cc02969af2df55d2",
+  measurementId: "G-PNT8Z9XNDJ"
 };
 
 const isConfigured = Object.keys(firebaseConfig).length > 0 && 'apiKey' in firebaseConfig;
