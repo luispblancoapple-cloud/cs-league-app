@@ -70,14 +70,42 @@ export function isUnitComplete(state: AppState, manifest: Manifest, topicId: str
 }
 
 export function isUnitUnlocked(
-  state: AppState,
-  manifest: Manifest,
-  units: TopicMeta[],
-  topicId: string
+  _state: AppState,
+  _manifest: Manifest,
+  _units: TopicMeta[],
+  _topicId: string
 ): boolean {
-  const idx = units.findIndex((u) => u.id === topicId);
-  if (idx <= 0) return true;
-  return isUnitComplete(state, manifest, units[idx - 1].id);
+  return true; // every topic can be practiced any time
+}
+
+export interface TopicStats {
+  topicId: string;
+  totalQuestions: number;
+  seenQuestions: number;
+  attempts: number;
+  correctAttempts: number;
+  accuracyPct: number | null; // null when no attempts yet
+}
+
+export function topicStats(state: AppState, manifest: Manifest, topicId: string): TopicStats {
+  const qs = unitQuestions(manifest, topicId);
+  let attempts = 0;
+  let correctAttempts = 0;
+  let seenQuestions = 0;
+  for (const q of qs) {
+    const s = getStat(state, qid(q.testId, q.number));
+    if (s.seen > 0) seenQuestions++;
+    attempts += s.seen;
+    correctAttempts += s.correct;
+  }
+  return {
+    topicId,
+    totalQuestions: qs.length,
+    seenQuestions,
+    attempts,
+    correctAttempts,
+    accuracyPct: attempts > 0 ? Math.round((correctAttempts / attempts) * 100) : null,
+  };
 }
 
 export function currentActiveUnit(state: AppState, manifest: Manifest, units: TopicMeta[]): TopicMeta {

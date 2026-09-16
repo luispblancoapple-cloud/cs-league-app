@@ -10,10 +10,11 @@ import Lesson from './screens/Lesson';
 import Summary from './screens/Summary';
 import OutOfHearts from './screens/OutOfHearts';
 import Settings from './screens/Settings';
+import TopicTracker from './screens/TopicTracker';
 
 const manifest = manifestData as unknown as Manifest;
 
-type View = 'home' | 'lesson' | 'summary' | 'out-of-hearts' | 'settings';
+type View = 'home' | 'lesson' | 'summary' | 'out-of-hearts' | 'settings' | 'stats';
 
 export default function App() {
   const [state, setState] = useState<AppState | null>(null);
@@ -106,6 +107,7 @@ export default function App() {
           onStartDaily={startDaily}
           onStartUnit={startUnit}
           onSettings={() => setView('settings')}
+          onStats={() => setView('stats')}
           onRefillHearts={refillHearts}
         />
       )}
@@ -136,6 +138,9 @@ export default function App() {
       )}
       {view === 'settings' && (
         <Settings state={state} onChange={setState} onBack={() => setView('home')} />
+      )}
+      {view === 'stats' && (
+        <TopicTracker state={state} manifest={manifest} onBack={() => setView('home')} />
       )}
     </>
   );

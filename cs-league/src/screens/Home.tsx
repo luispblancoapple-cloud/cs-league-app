@@ -4,7 +4,6 @@ import { AppState, Manifest, TopicMeta } from '../lib/types';
 import {
   orderedUnits,
   isUnitComplete,
-  isUnitUnlocked,
   currentActiveUnit,
   dueReviewQuestions,
 } from '../lib/srs';
@@ -21,6 +20,7 @@ export default function Home({
   onStartDaily,
   onStartUnit,
   onSettings,
+  onStats,
   onRefillHearts,
 }: {
   state: AppState;
@@ -28,6 +28,7 @@ export default function Home({
   onStartDaily: () => void;
   onStartUnit: (topicId: string) => void;
   onSettings: () => void;
+  onStats: () => void;
   onRefillHearts: () => void;
 }) {
   const units = useMemo(() => orderedUnits(manifest.topics), [manifest]);
@@ -40,7 +41,7 @@ export default function Home({
 
   return (
     <div className="app-shell">
-      <TopBar state={state} onSettings={onSettings} />
+      <TopBar state={state} onSettings={onSettings} onStats={onStats} />
       <div className="home-scroll">
         <div className="unit-banner">
           <div className="eyebrow">
@@ -54,15 +55,14 @@ export default function Home({
         <div className="path">
           {units.map((u, i) => {
             const complete = isUnitComplete(state, manifest, u.id);
-            const unlocked = isUnitUnlocked(state, manifest, units, u.id);
-            const status = complete ? 'complete' : unlocked ? 'active' : 'locked';
+            const status = complete ? 'complete' : 'active';
             return (
               <UnitNode
                 key={u.id}
                 unit={u}
                 status={status as any}
                 offset={OFFSET_PATTERN[i % OFFSET_PATTERN.length]}
-                onClick={() => unlocked && setOpenUnit(u)}
+                onClick={() => setOpenUnit(u)}
               />
             );
           })}
