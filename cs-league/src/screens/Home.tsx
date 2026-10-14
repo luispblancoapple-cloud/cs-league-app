@@ -91,9 +91,9 @@ export default function Home({
                 ? `Out of hearts — next one in ${nextHeartTime}`
                 : 'Out of hearts'}
             </div>
-            <button className="btn btn-primary" onClick={onRefillHearts} disabled={state.gems < 30}>
+            <button className="btn btn-primary" onClick={onRefillHearts} disabled={state.gems < 10}>
               <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
-                <Gem size={18} /> Refill for 30 gems
+                <Gem size={18} /> Refill for 10 gems
               </span>
             </button>
           </div>
