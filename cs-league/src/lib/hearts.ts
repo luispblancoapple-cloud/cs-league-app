@@ -2,7 +2,7 @@ import { AppState } from './types';
 
 export const MAX_HEARTS = 5;
 export const REGEN_INTERVAL_MS = 4 * 60 * 60 * 1000; // 1 heart every 4 hours
-export const GEM_REFILL_COST = 30;
+export const GEM_REFILL_COST = 10;
 
 // Call on app load and before starting any lesson - catches up on regeneration
 // that happened while the app was closed.
