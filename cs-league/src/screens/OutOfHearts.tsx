@@ -16,7 +16,7 @@ export default function OutOfHearts({
   onDone: () => void;
 }) {
   const nextHeartTime = timeUntilNextHeart(state);
-  const canRefill = state.gems >= 30;
+  const canRefill = state.gems >= 10;
 
   return (
     <div className="summary-shell">
@@ -44,7 +44,7 @@ export default function OutOfHearts({
 
       <button className="btn btn-primary" onClick={onRefill} disabled={!canRefill} style={{ marginBottom: 12 }}>
         <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
-          <Gem size={18} /> Refill all hearts for 30 gems
+          <Gem size={18} /> Refill all hearts for 10 gems
         </span>
       </button>
       <button className="btn btn-ghost" onClick={onDone}>
